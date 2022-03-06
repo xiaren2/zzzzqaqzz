@@ -1,0 +1,96 @@
+
+name: NueXini
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Git Source'
+        required: true
+        default: '1'
+
+jobs:
+  Fconfig: 
+    name: Generate Config
+    runs-on: ubuntu-latest
+    outputs:
+      CFG_CONFIG: ${{ steps.findconfig.outputs.CFG_CONFIG }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Find Config
+        id: findconfig
+        run: |
+          CFGS="$(cat $GITHUB_WORKSPACE/config/cfg.list)"
+          
+          NUEXINI='['
+          n=1
+          
+          for a in $CFGS; do
+            [[ $n -ne 1 ]] && NUEXINI="$NUEXINI"','
+            NUEXINI="$NUEXINI"'"'"${a}"'"'
+            n=0
+          done
+          
+          NUEXINI="$NUEXINI"']'
+          
+          echo $NUEXINI
+          echo "::set-output name=CFG_CONFIG::$NUEXINI"
+  
+  build:
+    name: ${{ matrix.config }}
+    needs: [Fconfig]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: 
+        config: ${{fromJson(needs.Fconfig.outputs.CFG_CONFIG)}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Initialization
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -y update 2>&1 >/dev/null
+          sudo -E apt-get -y install $(cat ./.github/workflows/BuildEnviroment) 2>&1 >/dev/null
+          sudo -E apt-get -y autoremove --purge 2>&1 >/dev/null
+          sudo -E apt-get -y clean 2>&1 >/dev/null
+
+      - name: Build
+        run: |
+          chmod +x $GITHUB_WORKSPACE/sh/*.sh
+          releasetag=$(sed -n "${{ github.event.inputs.source }}p" $GITHUB_WORKSPACE/config/releasetag.list)
+          git clone $releasetag nuexini
+          cd nuexini
+          $GITHUB_WORKSPACE/sh/Hello_NueXini.sh
+          ./scripts/feeds update -a > /dev/null
+          ./scripts/feeds install -a
+          cp -rf $GITHUB_WORKSPACE/config/${{ matrix.config }} ./.config
+          $GITHUB_WORKSPACE/sh/Hi_NueXini.sh
+          make defconfig
+          make download -j8
+          rm -rf $(find ./dl/ -size -1024c)
+          make -j8 || make -j1 V=sc
+          mkdir -p ./artifact/firmware
+          mkdir -p ./artifact/IPK
+          cp -rf $(find ./bin/ -type f -name "*.ipk") ./artifact/IPK/
+          rm -rf $(find ./bin/targets/ -type d -name "packages")
+          cp -rf $(find ./bin/targets/ -type f) ./artifact/firmware/
+    
+      - name: Upload Firmware
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.config }}-Firmware
+          path: nuexini/artifact/firmware
+
+      - name: Upload IPK
+        uses: actions/upload-artifact@master
+        with:
+          name: ${{ matrix.config }}-Packages
+          path: nuexini/artifact/IPK
