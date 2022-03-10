@@ -1,2 +1,0 @@
-# zzzzqaqzz
-By NueXini
