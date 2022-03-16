@@ -26,9 +26,6 @@ ln -sf /sbin/ip /usr/bin/ip
 sed -i '/log-facility/d' /etc/dnsmasq.conf
 echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
 
-sed -i '/option check_signature/d' /etc/opkg.conf
-echo "# option check_signature" >> /etc/opkg.conf
-
 sed -i 's#downloads.openwrt.org#mirrors.cloud.tencent.com/openwrt#g' /etc/opkg/distfeeds.conf
 sed -i '/NueXini_Packages/d' /etc/opkg/distfeeds.conf
 sed -i "s/# //g" /etc/opkg/distfeeds.conf

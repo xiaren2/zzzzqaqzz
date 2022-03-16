@@ -82,6 +82,7 @@ jobs:
           cp -rf $(find ./bin/ -type f -name "*.ipk") ./artifact/IPK/
           rm -rf $(find ./bin/targets/ -type d -name "packages")
           cp -rf $(find ./bin/targets/ -type f) ./artifact/firmware/
+          rm `find ./artifact/firmware/ -maxdepth 1 -name '*-initramfs-kernel.bin'`
     
       - name: Upload Firmware
         uses: actions/upload-artifact@master
