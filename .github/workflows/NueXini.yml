@@ -68,11 +68,11 @@ jobs:
           releasetag=$(sed -n "${{ github.event.inputs.source }}p" $GITHUB_WORKSPACE/config/releasetag.list)
           git clone $releasetag nuexini
           cd nuexini
-          $GITHUB_WORKSPACE/sh/Hello_NueXini.sh
+          sh $GITHUB_WORKSPACE/sh/Hello_NueXini.sh
           ./scripts/feeds update -a > /dev/null
           ./scripts/feeds install -a
           cp -rf $GITHUB_WORKSPACE/config/${{ matrix.config }} ./.config
-          $GITHUB_WORKSPACE/sh/Hi_NueXini.sh
+          sh $GITHUB_WORKSPACE/sh/Hi_NueXini.sh
           make defconfig
           make download -j8
           rm -rf $(find ./dl/ -size -1024c)

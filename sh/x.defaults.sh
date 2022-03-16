@@ -34,7 +34,7 @@ sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 wifi up
 
-# sed -i 's/-hidden//g' /usr/share/luci/menu.d/*.json
+sed -i 's/-hidden//g' /usr/share/luci/menu.d/*.json
 
 rm /etc/adv_luci_disabled
 rm -rf /tmp/luci-modulecache/
